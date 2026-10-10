@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<!-- Bagel Sunrise Sets — lights and decks in NYC bagel shops at dawn. Built by DataRail, 2026-10.
+     Source: github.com/fvtale/bagel (site/index.html). Published into
+     datarail-site/public/bagel by CI; edits made there are overwritten. -->
+<html lang="en" class="circuit-tint" style="--circuit-tint:#ff9a57; --circuit-tint-light:#ffc690">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sunrise Sets — DataRail Bagel</title>
+<meta name="description" content="Warm, lo-fi sunrise DJ sets in New York bagel shops. We bring the lights and the decks; the shop brings a corner and the ovens. Manhattan first, then the other four boroughs.">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#05070b">
+
+<meta property="og:title" content="Sunrise Sets — DataRail Bagel">
+<meta property="og:description" content="Lights, decks and a lo-fi set in a New York bagel shop as the sun comes up. Manhattan first.">
+<meta property="og:url" content="https://datarail.org/bagel/">
+<meta property="og:type" content="website">
+
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">&#129391;</text></svg>'>
+
+<!-- Shared decorative rail layer, tinted to dawn by the --circuit-tint on
+     <html>. Root-relative: only ever served from datarail.org, and purely
+     ornamental if the request 404s locally. -->
+<link rel="stylesheet" href="/assets/circuit.css">
+
+<!-- ============================================================
+     1. STYLES — the Library's house look (system type, hairlines,
+        mono labels, cyan for anything you can press), with a lo-fi
+        edge: scanlines, grain, a colour split on the headline and
+        a dawn-amber sun for anything about the morning itself.
+     ============================================================ -->
+<style>
+:root {
+  --bg: #05070b;
+  --bg-soft: #0b0f16;
+  --bg-raised: #10151e;
+  --fg: #f5f5f7;
+  --muted: #9ca3af;
+  --dim: #7d8694;
+
+  --accent: #42f5ff;         /* night: links, buttons, confirmed sets */
+  --accent-strong: #42ffb3;
+  --sun: #ffb36b;            /* dawn: sunrise times, open slots */
+  --dawn: #ff6fa8;           /* the pink edge of the horizon, used sparingly */
+  --line: #1c232f;
+
+  --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --radius: 10px;
+  --fast: 150ms ease-out;
+  --shell: 980px;
+  --header-h: 51px;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-h) + 16px); }
+
+body {
+  margin: 0;
+  font-family: var(--font-main);
+  background: radial-gradient(circle at 50% -6%, #1a1420 0, #0b0f16 34%, var(--bg) 62%, #03050a 100%);
+  background-attachment: fixed;
+  color: var(--fg);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* The lo-fi layer: scanlines and a little film grain over everything. It
+   sits above the page but never takes a click. Viewport-sized and moved by
+   background-position only: an oversized, transformed or blended fixed
+   layer composites badly and can paint a grey slab over the page. */
+body::before, body::after {
+  content: ""; position: fixed; inset: 0; z-index: 90; pointer-events: none;
+}
+body::before {
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,.022) 0 1px, transparent 1px 3px);
+}
+body::after {
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0"/></filter><rect width="160" height="160" filter="url(%23n)"/></svg>');
+  opacity: .045;
+  animation: grain 1.2s steps(4) infinite;
+}
+@keyframes grain {
+  0% { background-position: 0 0; } 25% { background-position: -37px 23px; }
+  50% { background-position: 29px -41px; } 75% { background-position: -17px -11px; }
+}
+
+a { color: inherit; }
+h1, h2, h3 { margin: 0; line-height: 1.14; font-weight: 600; letter-spacing: -0.02em; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 5px; }
+
+.shell { max-width: var(--shell); margin: 0 auto; padding: 0 20px; width: 100%; }
+.label {
+  font-family: var(--font-mono); font-size: 0.67rem;
+  text-transform: uppercase; letter-spacing: 0.18em; color: var(--dim);
+}
+.label b { color: var(--sun); font-weight: 500; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.skip-link {
+  position: absolute; left: -9999px; top: 0; z-index: 100;
+  background: var(--accent); color: #05070b; padding: 10px 16px;
+  font-weight: 600; text-decoration: none;
+}
+.skip-link:focus { left: 8px; top: 8px; }
+
+/* ---------- Header ---------- */
+.site-header {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(5, 7, 11, 0.9);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+}
+.header-inner {
+  max-width: var(--shell); margin: 0 auto; padding: 11px 20px;
+  display: flex; align-items: center; gap: 12px;
+}
+.brand { display: flex; align-items: center; gap: 9px; margin-right: auto; text-decoration: none; }
+.brand-dot {
+  width: 9px; height: 9px; border-radius: 50%; flex: none;
+  background: var(--sun); box-shadow: 0 0 9px var(--sun);
+}
+.brand-text { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; }
+.brand-text b { color: var(--sun); font-weight: 600; }
+.header-nav { display: flex; gap: 16px; font-size: 0.84rem; }
+.header-nav a { color: var(--muted); text-decoration: none; transition: color var(--fast); }
+.header-nav a:hover { color: var(--fg); }
+@media (max-width: 620px) { .header-nav a:not(.keep) { display: none; } }
+
+/* ---------- Hero ---------- */
+.hero { position: relative; padding: 46px 0 0; }
+.hero-grid {
+  display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 36px; align-items: end;
+}
+.hero h1 {
+  font-size: clamp(2.1rem, 6.4vw, 3.6rem); margin: 12px 0 16px; max-width: 14ch;
+  /* the colour split: a hair of pink one way, a hair of cyan the other */
+  text-shadow: -1px 0 rgba(255,111,168,.5), 1px 0 rgba(66,245,255,.5);
+}
+.hero h1 em { font-style: normal; color: var(--sun); text-shadow: -1px 0 rgba(255,111,168,.55), 1px 0 rgba(66,245,255,.35), 0 0 22px rgba(255,179,107,.35); }
+.hero .lede { color: var(--muted); max-width: 52ch; font-size: 1.04rem; }
+.hero .lede strong { color: var(--fg); font-weight: 600; }
+
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 10px 20px; border-radius: 999px; background: transparent;
+  border: 1px solid var(--accent); color: var(--accent);
+  font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; text-decoration: none;
+  transition: background var(--fast), color var(--fast), border-color var(--fast);
+}
+.btn:hover { background: var(--accent); color: #05070b; }
+.btn.quiet { border-color: var(--line); color: var(--muted); }
+.btn.quiet:hover { border-color: var(--dim); background: transparent; color: var(--fg); }
+
+/* The deck: next set, styled as a tape counter. */
+.deck {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(255,179,107,.05), transparent 46%), var(--bg-soft);
+  font-family: var(--font-mono); position: relative; overflow: hidden;
+}
+.deck-top {
+  display: flex; justify-content: space-between; gap: 10px;
+  padding: 10px 14px; border-bottom: 1px solid var(--line);
+  font-size: 0.66rem; letter-spacing: .16em; text-transform: uppercase; color: var(--dim);
+}
+.rec { color: var(--dawn); }
+.rec::before { content: "●"; margin-right: 6px; animation: blink 1.6s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.deck-clock { color: var(--fg); font-variant-numeric: tabular-nums; }
+.deck-body { padding: 16px 14px 14px; }
+.deck-body h2 { font-family: var(--font-main); font-size: 1.3rem; margin: 6px 0 4px; }
+.deck-when { font-size: 0.8rem; color: var(--fg); }
+.deck-where { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+.deck-sun { font-size: 0.78rem; color: var(--sun); margin-top: 8px; }
+.counter { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 14px 0; }
+.counter div {
+  border: 1px solid var(--line); border-radius: 6px; padding: 8px 0 6px; text-align: center;
+  background: rgba(0,0,0,.3);
+}
+.counter b {
+  display: block; font-size: 1.45rem; font-weight: 500; line-height: 1.1; color: var(--accent);
+  font-variant-numeric: tabular-nums; text-shadow: 0 0 12px rgba(66,245,255,.35);
+}
+.counter span { font-size: 0.56rem; letter-spacing: .18em; color: var(--dim); text-transform: uppercase; }
+.deck-live { color: var(--accent-strong); font-size: 1rem; margin: 14px 0; text-transform: uppercase; letter-spacing: .1em; }
+.deck .btn { width: 100%; justify-content: center; font-family: var(--font-main); }
+
+/* The horizon: a striped lo-fi sun coming up behind a flat skyline. */
+.horizon { display: block; width: 100%; height: clamp(90px, 16vw, 170px); margin-top: 34px; }
+.horizon .sunball { animation: rise 9s cubic-bezier(.2,.7,.2,1) both; transform-box: fill-box; }
+@keyframes rise { from { transform: translateY(46%); } to { transform: translateY(0); } }
+
+.ticker { border-block: 1px solid var(--line); overflow: hidden; background: rgba(255,179,107,.035); }
+.ticker-track { display: flex; width: max-content; animation: tick 60s linear infinite; }
+.ticker span {
+  font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: .2em; text-transform: uppercase;
+  padding: 10px 0; white-space: nowrap; color: var(--dim);
+}
+.ticker span i { font-style: normal; color: var(--sun); padding: 0 18px; opacity: .7; }
+@keyframes tick { to { transform: translateX(-50%); } }
+
+/* ---------- Sections ---------- */
+.section { padding: 64px 0 0; }
+.sec-head { display: flex; justify-content: space-between; align-items: end; gap: 10px 24px; flex-wrap: wrap; margin-bottom: 20px; }
+.sec-head h2 { font-size: clamp(1.5rem, 3.6vw, 2rem); margin-top: 8px; }
+.sec-head h2 em { font-style: normal; color: var(--sun); }
+.sec-head p { color: var(--muted); max-width: 52ch; font-size: 0.94rem; }
+
+/* ---------- Filter chips (the Library's) ---------- */
+.chips { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+.chip {
+  font-size: 0.8rem; cursor: pointer; text-decoration: none;
+  color: var(--muted); background: transparent;
+  border: 1px solid var(--line); border-radius: 999px; padding: 5px 13px;
+  transition: border-color var(--fast), color var(--fast), background var(--fast);
+}
+.chip:hover { color: var(--fg); border-color: var(--dim); }
+.chip[aria-pressed="true"] { color: #05070b; background: var(--accent); border-color: var(--accent); font-weight: 600; }
+.chip .n { font-family: var(--font-mono); font-size: 0.68rem; opacity: .7; margin-left: 6px; }
+
+/* ---------- Calendar ---------- */
+.cal-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 22px; align-items: start; }
+.cal { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-soft); padding: 14px; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal-head h3 { font-family: var(--font-mono); font-size: 0.84rem; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; }
+.cal-head button {
+  background: transparent; border: 1px solid var(--line); border-radius: 6px;
+  width: 32px; height: 32px; cursor: pointer; color: var(--muted);
+}
+.cal-head button:hover { color: var(--accent); border-color: var(--accent); }
+.cal table { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
+.cal th { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: .14em; color: var(--dim); font-weight: 400; padding-bottom: 2px; }
+.cal td { padding: 0; }
+.cal .day {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  width: 100%; aspect-ratio: 1; border-radius: 7px; border: 1px solid transparent;
+  font-family: var(--font-mono); font-size: 0.8rem; color: var(--dim); background: rgba(255,255,255,.015);
+  padding: 0;
+}
+.cal .day.out { opacity: .2; }
+.cal .day.today { border-color: var(--dim); color: var(--fg); }
+.cal button.day { cursor: pointer; color: var(--fg); }
+.cal button.day::after { content: ""; width: 5px; height: 5px; border-radius: 50%; }
+.cal button.day.open { border: 1px dashed rgba(255,179,107,.6); background: rgba(255,179,107,.06); }
+.cal button.day.open::after { background: var(--sun); box-shadow: 0 0 6px var(--sun); }
+.cal button.day.confirmed { border-color: rgba(66,245,255,.55); background: rgba(66,245,255,.1); box-shadow: inset 0 0 12px rgba(66,245,255,.14); }
+.cal button.day.confirmed::after { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.cal button.day.past { opacity: .4; box-shadow: none; }
+.cal button.day:hover { background: rgba(66,245,255,.16); }
+.cal-key { margin-top: 10px; display: flex; gap: 6px 16px; flex-wrap: wrap; font-family: var(--font-mono); font-size: 0.64rem; color: var(--dim); letter-spacing: .08em; text-transform: uppercase; }
+.cal-key i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.cal-key .k-open { border: 1px dashed var(--sun); }
+.cal-key .k-conf { background: rgba(66,245,255,.4); border: 1px solid var(--accent); }
+.cal-foot { margin-top: 8px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+/* ---------- Sets list: Library entries, with the bloom ---------- */
+.sets { display: grid; }
+.set {
+  display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 4px 16px;
+  padding: 15px 12px; margin: 0 -12px; border-top: 1px solid var(--line);
+  position: relative; isolation: isolate; border-radius: 8px;
+  transition: background var(--fast);
+}
+.sets .set:last-child { border-bottom: 1px solid var(--line); }
+.set:hover, .set:focus-within { background: var(--bg-soft); }
+/* Same bloom as the Library rows, in whatever colour the rails are running. */
+.set::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 8px; pointer-events: none;
+  background: radial-gradient(140% 160% at 0% 50%,
+    color-mix(in srgb, var(--circuit-echo, var(--sun)) 18%, transparent), transparent 64%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--circuit-echo, var(--sun)) 30%, transparent),
+    0 0 28px -8px color-mix(in srgb, var(--circuit-echo, var(--sun)) 46%, transparent);
+  opacity: 0; transition: opacity var(--fast);
+}
+.set:hover::before, .set:focus-within::before, .set.flash::before { opacity: 1; animation: bloom 2.4s ease-in-out infinite; }
+@keyframes bloom { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+.set.past { opacity: .5; }
+
+.set-date { font-family: var(--font-mono); text-align: center; border-right: 1px solid var(--line); padding-right: 12px; line-height: 1.2; }
+.set-date .m { font-size: 0.62rem; letter-spacing: .16em; color: var(--sun); text-transform: uppercase; }
+.set-date .d { font-size: 1.7rem; color: var(--fg); margin: 2px 0; }
+.set-date .w { font-size: 0.58rem; letter-spacing: .14em; color: var(--dim); text-transform: uppercase; }
+.set h3 { font-size: 1rem; }
+.tag {
+  display: inline-block; margin-left: 9px; vertical-align: 2px;
+  font-family: var(--font-mono); font-size: 0.56rem; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  border: 1px solid var(--line); border-radius: 3px; padding: 2px 7px; color: var(--dim);
+}
+.tag.open { border-color: rgba(255,179,107,.7); color: var(--sun); }
+.tag.confirmed { border-color: var(--accent-strong); color: var(--accent-strong); }
+.tag.live { border-color: var(--dawn); color: var(--dawn); }
+.set .meta {
+  display: flex; flex-wrap: wrap; gap: 3px 14px; margin-top: 4px;
+  font-family: var(--font-mono); font-size: 0.7rem; color: var(--dim);
+}
+.set .meta b { color: var(--fg); font-weight: 500; }
+.set .meta .sun { color: var(--sun); }
+.set p.note { color: var(--muted); font-size: 0.88rem; margin-top: 6px; }
+.set .actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.pill {
+  font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); cursor: pointer;
+  border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; background: transparent;
+  text-decoration: none; transition: border-color var(--fast), color var(--fast);
+}
+.pill:hover { border-color: var(--accent); color: var(--accent); }
+.pill.warm:hover { border-color: var(--sun); color: var(--sun); }
+.empty {
+  border: 1px dashed var(--line); border-radius: var(--radius); background: var(--bg-soft);
+  padding: 22px; color: var(--muted); font-size: 0.9rem;
+}
+
+/* ---------- The route ---------- */
+.route { display: grid; }
+.stop {
+  display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 2px 16px; align-items: baseline;
+  width: calc(100% + 24px); text-align: left; cursor: pointer; background: transparent; border: 0;
+  border-top: 1px solid var(--line); padding: 15px 12px; margin: 0 -12px; border-radius: 8px;
+  position: relative; isolation: isolate; transition: background var(--fast);
+}
+.route .stop:last-child { border-bottom: 1px solid var(--line); }
+.stop:hover, .stop:focus-visible { background: var(--bg-soft); }
+.stop::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 8px; pointer-events: none;
+  background: radial-gradient(140% 160% at 0% 50%, color-mix(in srgb, var(--circuit-echo, var(--accent)) 18%, transparent), transparent 64%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--circuit-echo, var(--accent)) 30%, transparent);
+  opacity: 0; transition: opacity var(--fast);
+}
+.stop:hover::before, .stop:focus-visible::before { opacity: 1; animation: bloom 2.4s ease-in-out infinite; }
+.stop .idx { font-family: var(--font-mono); font-size: 0.72rem; color: var(--dim); }
+.stop .name { font-weight: 600; transition: color var(--fast); }
+.stop:hover .name, .stop:focus-visible .name { color: var(--circuit-echo, var(--accent)); }
+.stop .desc { grid-column: 2; color: var(--muted); font-size: 0.88rem; }
+.stop .state { grid-row: 1; grid-column: 3; font-family: var(--font-mono); font-size: 0.7rem; color: var(--dim); white-space: nowrap; }
+.stop .state.now { color: var(--sun); }
+.stop .state.now::before { content: "● "; animation: blink 1.6s steps(1) infinite; }
+
+/* ---------- For shops ---------- */
+.host-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+.bring { list-style: none; margin: 0; padding: 0; }
+.bring li { border-top: 1px solid var(--line); padding: 12px 0; display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; }
+.bring li:last-child { border-bottom: 1px solid var(--line); }
+.bring .k { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--sun); padding-top: 3px; }
+.bring .v { color: var(--muted); font-size: 0.92rem; }
+.bring .v strong { color: var(--fg); font-weight: 600; }
+
+.spec { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-soft); font-family: var(--font-mono); overflow: hidden; }
+.spec-head { display: flex; justify-content: space-between; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 0.64rem; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.spec-head b { color: var(--accent-strong); font-weight: 400; }
+.spec-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 12px 14px; border-bottom: 1px dashed var(--line); align-items: center; }
+.spec-row:last-child { border-bottom: 0; }
+.spec-row .k { font-size: 0.7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.spec-row .k small { display: block; font-family: var(--font-main); font-size: 0.78rem; letter-spacing: 0; text-transform: none; color: var(--dim); margin-top: 2px; }
+.spec-row .v { font-size: 1.05rem; color: var(--sun); white-space: nowrap; text-shadow: 0 0 12px rgba(255,179,107,.25); }
+
+.pitch { margin-top: 22px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-soft); padding: 18px; }
+.pitch h3 { font-size: 1.05rem; margin: 6px 0 4px; }
+.pitch > p { color: var(--muted); font-size: 0.88rem; }
+.form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.form .full { grid-column: 1 / -1; }
+.field label { display: block; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); margin-bottom: 5px; }
+.field input, .field select, .field textarea {
+  width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  padding: 9px 12px; font-size: 0.92rem; color: var(--fg);
+}
+.field textarea { min-height: 76px; resize: vertical; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); outline: none; }
+.form-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px 16px; flex-wrap: wrap; }
+.form-foot p { color: var(--dim); font-size: 0.8rem; max-width: 46ch; }
+
+/* ---------- Footer ---------- */
+.site-footer { border-top: 1px solid var(--line); background: var(--bg-soft); padding: 26px 0 34px; margin-top: 64px; }
+.footer-inner { display: flex; gap: 14px 24px; flex-wrap: wrap; align-items: baseline; }
+.footer-inner a { color: var(--muted); text-decoration: none; }
+.footer-inner a:hover { color: var(--accent); }
+.footer-note { width: 100%; margin: 10px 0 0; font-size: 0.79rem; color: var(--dim); max-width: 78ch; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 860px) {
+  .hero-grid, .cal-grid, .host-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .form { grid-template-columns: 1fr; }
+  .bring li { grid-template-columns: 1fr; gap: 2px; }
+  .stop { grid-template-columns: 26px minmax(0, 1fr); }
+  .stop .state { grid-row: auto; grid-column: 2; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="./">
+      <span class="brand-dot" aria-hidden="true"></span>
+      <span class="brand-text">DataRail <b>Bagel</b></span>
+    </a>
+    <nav class="header-nav" aria-label="Sections">
+      <a href="#calendar" class="keep">Calendar</a>
+      <a href="#route">Route</a>
+      <a href="#host">Host a set</a>
+      <a href="/library/">Library</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ========== Hero ========== -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="shell hero-grid">
+      <div>
+        <p class="label">Sunrise sets <b>//</b> NYC bagel shops <b>//</b> <span data-sun-today>Manhattan first</span></p>
+        <h1 id="hero-title">Lo-fi at first light, <em>with a bagel.</em></h1>
+        <p class="lede"><strong>We bring the lights and the decks to bagel shops with a little room to spare.</strong> Then we play a slow, warm set while the city wakes up and the sun comes over the rooftops. Every set starts before sunrise and runs through it. We start in Manhattan, then work through the other four boroughs.</p>
+        <div class="btn-row">
+          <a class="btn" href="#calendar">See the calendar</a>
+          <a class="btn quiet" href="#host">Host a set</a>
+        </div>
+      </div>
+
+      <aside class="deck" aria-labelledby="next-title">
+        <div class="deck-top">
+          <span class="rec">Side A</span>
+          <span class="deck-clock" data-clock aria-label="Time in New York">--:--:-- NYC</span>
+        </div>
+        <div class="deck-body">
+          <p class="label" data-next-label>Next set</p>
+          <h2 id="next-title" data-next-title>Loading the calendar…</h2>
+          <p class="deck-when" data-next-when></p>
+          <p class="deck-where" data-next-where></p>
+          <p class="deck-sun" data-next-sun></p>
+          <div class="counter" data-countdown hidden aria-live="off">
+            <div><b data-cd="d">0</b><span>Days</span></div>
+            <div><b data-cd="h">00</b><span>Hrs</span></div>
+            <div><b data-cd="m">00</b><span>Min</span></div>
+            <div><b data-cd="s">00</b><span>Sec</span></div>
+          </div>
+          <p class="deck-live" data-live hidden>● On air. The sun's on its way.</p>
+          <a class="btn" href="#calendar" data-next-cta>Open the calendar</a>
+        </div>
+      </aside>
+    </div>
+
+    <svg class="horizon" viewBox="0 0 1200 170" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ff6fa8" stop-opacity="0"/>
+          <stop offset=".7" stop-color="#ff6fa8" stop-opacity=".08"/>
+          <stop offset="1" stop-color="#ffb36b" stop-opacity=".2"/>
+        </linearGradient>
+        <linearGradient id="sunfill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffd59a"/>
+          <stop offset=".55" stop-color="#ffb36b"/>
+          <stop offset="1" stop-color="#ff6fa8"/>
+        </linearGradient>
+        <!-- the cut lines through the sun, thicker toward the horizon -->
+        <mask id="stripes">
+          <rect width="1200" height="170" fill="#fff"/>
+          <rect y="96"  width="1200" height="2" fill="#000"/>
+          <rect y="108" width="1200" height="3" fill="#000"/>
+          <rect y="120" width="1200" height="4" fill="#000"/>
+          <rect y="132" width="1200" height="6" fill="#000"/>
+          <rect y="145" width="1200" height="8" fill="#000"/>
+        </mask>
+      </defs>
+      <rect width="1200" height="170" fill="url(#sky)"/>
+      <g mask="url(#stripes)" opacity=".85">
+        <circle class="sunball" cx="600" cy="170" r="104" fill="url(#sunfill)"/>
+      </g>
+      <!-- a flat, blocky skyline: water towers and walk-ups, not landmarks -->
+      <path fill="#070a10" d="M0 170V138h46v-12h30v12h22v-20h40v20h18v-8h34v-18h12v-8h10v8h12v18h40v14h28v-24h44v24h20v-10h36v-22h18v-10h8v10h18v22h30v16h26v-30h52v30h20v-8h28v-16h12v16h26v8h36v-26h48v26h22v-12h34v-18h8v-9h8v9h8v18h26v12h30v-22h46v22h20v-14h40v-12h10v12h30v14h26v-28h40v28h34v-10h28v10h36v-18h44v18h40v32z"/>
+      <line x1="0" y1="169.5" x2="1200" y2="169.5" stroke="#ffb36b" stroke-opacity=".5"/>
+    </svg>
+
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker-track">
+        <span>Lights<i>✦</i>Decks<i>✦</i>Coffee on<i>✦</i>Ovens going<i>✦</i>Sunrise<i>✦</i>Everything bagel<i>✦</i>Manhattan first<i>✦</i>Five boroughs<i>✦</i></span>
+        <span>Lights<i>✦</i>Decks<i>✦</i>Coffee on<i>✦</i>Ovens going<i>✦</i>Sunrise<i>✦</i>Everything bagel<i>✦</i>Manhattan first<i>✦</i>Five boroughs<i>✦</i></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Calendar ========== -->
+  <section class="section" id="calendar" aria-labelledby="cal-title">
+    <div class="shell">
+      <div class="sec-head">
+        <div>
+          <p class="label">01 <b>//</b> The calendar</p>
+          <h2 id="cal-title">Every set catches the <em>sunrise.</em></h2>
+        </div>
+        <p>Dashed dates are open: mornings we want to fill and are looking for a shop to host. Solid dates are confirmed. Sunrise times are calculated for each date.</p>
+      </div>
+
+      <div class="chips" role="group" aria-label="Filter by borough" data-chips></div>
+
+      <div class="cal-grid">
+        <div class="cal">
+          <div class="cal-head">
+            <button type="button" data-cal-prev aria-label="Previous month">‹</button>
+            <h3 data-cal-title aria-live="polite"></h3>
+            <button type="button" data-cal-next aria-label="Next month">›</button>
+          </div>
+          <table>
+            <thead><tr><th scope="col">Su</th><th scope="col">Mo</th><th scope="col">Tu</th><th scope="col">We</th><th scope="col">Th</th><th scope="col">Fr</th><th scope="col">Sa</th></tr></thead>
+            <tbody data-cal-body></tbody>
+          </table>
+          <div class="cal-key">
+            <span><i class="k-open"></i>Open slot</span>
+            <span><i class="k-conf"></i>Confirmed</span>
+          </div>
+          <div class="cal-foot">
+            <span class="label" data-synced></span>
+            <span class="label">Times are New York</span>
+          </div>
+        </div>
+
+        <div>
+          <p class="label" style="margin-bottom:6px">Upcoming <span data-filter-name></span></p>
+          <div class="sets" data-sets></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Route ========== -->
+  <section class="section" id="route" aria-labelledby="route-title">
+    <div class="shell">
+      <div class="sec-head">
+        <div>
+          <p class="label">02 <b>//</b> The route</p>
+          <h2 id="route-title">Manhattan first, then <em>the other four.</em></h2>
+        </div>
+        <p>We'll move on to the next borough once Manhattan has a regular rotation of shops. Pick a borough to filter the calendar.</p>
+      </div>
+      <div class="route" data-route></div>
+    </div>
+  </section>
+
+  <!-- ========== For shops ========== -->
+  <section class="section" id="host" aria-labelledby="host-title">
+    <div class="shell">
+      <div class="sec-head">
+        <div>
+          <p class="label">03 <b>//</b> For bagel shops</p>
+          <h2 id="host-title">A corner, a power outlet, <em>and the ovens on.</em></h2>
+        </div>
+        <p>You don't need a stage or a back room. If you can fit a small table without blocking the line, you can host.</p>
+      </div>
+
+      <div class="host-grid">
+        <ul class="bring">
+          <li><span class="k">We bring</span><span class="v"><strong>Lights and decks.</strong> Warm, low lighting, a compact DJ setup and a small speaker. We also bring the crew to set it up and pack it away.</span></li>
+          <li><span class="k">You bring</span><span class="v"><strong>A corner and the coffee.</strong> You keep running the shop as normal. People come in for the set and stay for breakfast.</span></li>
+          <li><span class="k">The sound</span><span class="v"><strong>Lo-fi, at talking volume.</strong> Slow house, ambient and soul edits. The counter can still hear an order.</span></li>
+          <li><span class="k">The timing</span><span class="v"><strong>Before dawn, through sunrise.</strong> We set up while you open and finish while the morning is still quiet. We plan each date with you.</span></li>
+        </ul>
+
+        <div class="spec" role="table" aria-label="What the setup needs">
+          <div class="spec-head" role="row"><span role="columnheader">Footprint // sunrise-rig-01</span><b role="columnheader">● Fits most shops</b></div>
+          <div class="spec-row" role="row">
+            <span class="k" role="cell">Floor<small>A table for the decks, plus room to stand</small></span>
+            <span class="v" role="cell">≈ 6 × 4 ft</span>
+          </div>
+          <div class="spec-row" role="row">
+            <span class="k" role="cell">Power<small>We bring our own extension leads</small></span>
+            <span class="v" role="cell">1 outlet</span>
+          </div>
+          <div class="spec-row" role="row">
+            <span class="k" role="cell">Set-up<small>Before or as you open</small></span>
+            <span class="v" role="cell">≈ 30 min</span>
+          </div>
+          <div class="spec-row" role="row">
+            <span class="k" role="cell">The set<small>Starts before sunrise, runs through it</small></span>
+            <span class="v" role="cell">2–3 hr</span>
+          </div>
+          <div class="spec-row" role="row">
+            <span class="k" role="cell">Volume<small>The line can still order</small></span>
+            <span class="v" role="cell">Low</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pitch">
+        <p class="label">Host a set</p>
+        <h3>Tell us about your shop.</h3>
+        <p>This opens an email to us with your details filled in. Nothing is sent until you press send in your own mail app.</p>
+        <form class="form" data-pitch novalidate>
+          <div class="field">
+            <label for="f-shop">Shop name</label>
+            <input id="f-shop" name="shop" required autocomplete="organization">
+          </div>
+          <div class="field">
+            <label for="f-area">Neighborhood</label>
+            <input id="f-area" name="area" placeholder="e.g. Lower East Side">
+          </div>
+          <div class="field">
+            <label for="f-borough">Borough</label>
+            <select id="f-borough" name="borough" data-borough-select></select>
+          </div>
+          <div class="field">
+            <label for="f-space">Room to spare</label>
+            <select id="f-space" name="space">
+              <option>A corner by the window</option>
+              <option>A few tables' worth</option>
+              <option>A back room or side space</option>
+              <option>Not sure. Come and look.</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label for="f-note">Anything else</label>
+            <textarea id="f-note" name="note" placeholder="What time you open, which days suit you, a date from the calendar…"></textarea>
+          </div>
+          <div class="form-foot full">
+            <p data-pitch-msg aria-live="polite">Or write to <a href="mailto:contact@datarail.org">contact@datarail.org</a> directly.</p>
+            <button class="btn" type="submit">Write the email</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="shell footer-inner">
+    <a href="/">datarail.org</a>
+    <a href="/library/">Library</a>
+    <a href="/NYPizza/">Nuovo York Pizza</a>
+    <a href="https://github.com/fvtale/bagel" target="_blank" rel="noopener noreferrer">Source on GitHub</a>
+    <a href="mailto:contact@datarail.org">contact@datarail.org</a>
+    <p class="footer-note">
+      Sunrise times are calculated for lower Manhattan and are accurate to within a minute or two in every borough.
+      Dates are only marked confirmed once the shop has agreed. &copy; 2026 DataRail.
+    </p>
+  </div>
+</footer>
+
+<script src="/assets/circuit.js" defer></script>
+
+<script>
+/* ==========================================================================
+   2. DATA — events.json is the source of truth. SEED is a generated copy for
+      when the fetch fails; regenerate it with scripts/sync-seed.mjs.
+   ========================================================================== */
+
+/* SEED:START — generated by scripts/sync-seed.mjs, do not edit by hand */
+const SEED = {"updatedAt":"2026-10-10","events":[{"id":"open-2026-10-25","status":"open","date":"2026-10-25","time":"06:00","endTime":"09:00","borough":"manhattan","area":"Lower East Side","note":"The first one. Looking for a shop with a corner to spare and the ovens already going."},{"id":"open-2026-11-01","status":"open","date":"2026-11-01","time":"06:00","endTime":"09:00","borough":"manhattan","area":"West Village","note":"Clocks go back overnight, so the sun is up an hour earlier. An extra hour of sleep for everyone else."},{"id":"open-2026-11-08","status":"open","date":"2026-11-08","time":"06:00","endTime":"09:00","borough":"manhattan","area":"Upper West Side"},{"id":"open-2026-11-15","status":"open","date":"2026-11-15","time":"06:00","endTime":"09:00","borough":"manhattan","area":"Harlem"}]};
+/* SEED:END */
+
+const BOROUGHS = [
+  { id: "manhattan", name: "Manhattan", state: "Now booking", now: true,
+    desc: "First stop. Below Houston, through the Village and up to Harlem." },
+  { id: "brooklyn", name: "Brooklyn", state: "Next",
+    desc: "Lots of bagel shops with room to spare. Up next once Manhattan has a regular rotation." },
+  { id: "queens", name: "Queens", state: "Queued",
+    desc: "From Astoria out to the Rockaways, where the sunrise comes up over the water." },
+  { id: "bronx", name: "The Bronx", state: "Queued",
+    desc: "Arthur Avenue mornings and early starts along the Grand Concourse." },
+  { id: "staten-island", name: "Staten Island", state: "Queued",
+    desc: "Last on the route, and the first ferry in time for sunrise." }
+];
+const boroughName = id => (BOROUGHS.find(b => b.id === id) || { name: id }).name;
+
+/* ==========================================================================
+   3. TIME — everything runs on New York wall clock, whatever the visitor's
+      own zone. Dates are built field by field, never parsed from a string:
+      new Date('2026-10-25') is UTC midnight, the 24th in New York.
+   ========================================================================== */
+
+const TZ = "America/New_York";
+const pad = n => String(n).padStart(2, "0");
+
+function partsAt(t) {
+  const p = new Intl.DateTimeFormat("en-US", {
+    timeZone: TZ, year: "numeric", month: "numeric", day: "numeric",
+    hour: "numeric", minute: "numeric", second: "numeric", hourCycle: "h23", weekday: "short"
+  }).formatToParts(new Date(t));
+  const g = k => p.find(x => x.type === k).value;
+  return { y: +g("year"), m: +g("month"), d: +g("day"), h: +g("hour"), mi: +g("minute"), s: +g("second"),
+           wd: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(g("weekday")) };
+}
+const nyNow = () => partsAt(Date.now());
+
+/* The UTC instant of a New York wall-clock time. Two passes settle DST edges. */
+function nyInstant(y, m, d, h, mi) {
+  const guess = Date.UTC(y, m - 1, d, h, mi);
+  const off = t => { const p = partsAt(t); return Date.UTC(p.y, p.m - 1, p.d, p.h, p.mi) - t; };
+  let t = guess - off(guess);
+  t = guess - off(t);
+  return t;
+}
+
+/* Sunrise over Manhattan for a date, as a UTC instant. The sunrise equation;
+   validate.mjs runs the same one, so keep the two in step. */
+const LAT = 40.7128, LON = -74.0060;
+function sunrise(y, m, d) {
+  const r = Math.PI / 180;
+  const n = Date.UTC(y, m - 1, d, 12) / 864e5 + 2440587.5 - 2451545;
+  const J = n - LON / 360;
+  const M = (357.5291 + 0.98560028 * J) % 360;
+  const C = 1.9148 * Math.sin(M * r) + 0.02 * Math.sin(2 * M * r) + 0.0003 * Math.sin(3 * M * r);
+  const L = (M + C + 180 + 102.9372) % 360;
+  const transit = 2451545 + J + 0.0053 * Math.sin(M * r) - 0.0069 * Math.sin(2 * L * r);
+  const dec = Math.asin(Math.sin(L * r) * Math.sin(23.4397 * r));
+  const w = Math.acos((Math.sin(-0.833 * r) - Math.sin(LAT * r) * Math.sin(dec)) / (Math.cos(LAT * r) * Math.cos(dec)));
+  return (transit - w / (2 * Math.PI) - 2440587.5) * 864e5;
+}
+
+const ymd = s => s.split("-").map(Number);
+const hm = s => s.split(":").map(Number);
+
+function span(ev) {
+  const [y, m, d] = ymd(ev.date);
+  const [h, mi] = hm(ev.time);
+  const [eh, emi] = hm(ev.endTime);
+  return { start: nyInstant(y, m, d, h, mi), end: nyInstant(y, m, d, eh, emi) };
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS_LONG = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAYS_LONG = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+function weekday(y, m, d) { return new Date(Date.UTC(y, m - 1, d)).getUTCDay(); }
+
+function clock(h, mi) {
+  if (h === 0 && mi === 0) return "midnight";
+  const ampm = h < 12 ? "am" : "pm";
+  const h12 = h % 12 || 12;
+  return mi ? `${h12}:${pad(mi)}${ampm}` : `${h12}${ampm}`;
+}
+const clockOf = t => clock(...hm(t));
+function sunText(ev) {
+  const p = partsAt(sunrise(...ymd(ev.date)));
+  return `Sunrise ${clock(p.h, p.mi)}`;
+}
+
+/* ==========================================================================
+   4. RENDERING
+   ========================================================================== */
+
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === "class") e.className = v;
+    else if (k === "text") e.textContent = v;
+    else e.setAttribute(k, v);
+  }
+  for (const k of kids) if (k != null) e.append(k);
+  return e;
+}
+
+let EVENTS = [];
+let filter = "all";
+let calY, calM;
+
+const visible = () => EVENTS.filter(ev => filter === "all" || ev.borough === filter);
+const titleOf = ev => ev.title || (ev.status === "open" ? "Open slot" : "Sunrise Set");
+const placeOf = ev => [ev.venue, ev.area, boroughName(ev.borough)].filter(Boolean).join(" · ");
+const lineupText = ev => ev.lineup && ev.lineup.length ? ev.lineup.join(" · ") : "Lineup TBA";
+
+function whenText(ev) {
+  const [y, m, d] = ymd(ev.date);
+  return `${DAYS_LONG[weekday(y, m, d)]}, ${MONTHS_LONG[m - 1]} ${d} · ${clockOf(ev.time)}–${clockOf(ev.endTime)}`;
+}
+
+function hostMail(ev) {
+  const [y, m, d] = ymd(ev.date);
+  const subject = `Hosting the sunrise set on ${DAYS[weekday(y, m, d)]} ${MONTHS[m - 1]} ${d}`;
+  const body = `Hi DataRail,\n\nWe'd like to host the ${ev.area ? ev.area + " " : ""}sunrise set on ${whenText(ev)}.\n\nShop:\nAddress:\nWhat time we open:\n`;
+  return `mailto:contact@datarail.org?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+function icsFor(ev) {
+  const { start, end } = span(ev);
+  const f = t => new Date(t).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const esc = s => String(s).replace(/[\\;,]/g, m => "\\" + m).replace(/\n/g, "\\n");
+  const desc = [lineupText(ev), sunText(ev), ev.note].filter(Boolean).join(" — ");
+  return [
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//DataRail//Bagel Sunrise Sets//EN", "CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT",
+    `UID:${ev.id}@datarail.org`,
+    `DTSTAMP:${f(Date.now())}`,
+    `DTSTART:${f(start)}`,
+    `DTEND:${f(end)}`,
+    `SUMMARY:${esc(`${titleOf(ev)} at ${ev.venue}`)}`,
+    `DESCRIPTION:${esc(desc)}`,
+    `LOCATION:${esc(`${ev.venue}, ${ev.address}`)}`,
+    "URL:https://datarail.org/bagel/#calendar",
+    "END:VEVENT", "END:VCALENDAR"
+  ].join("\r\n");
+}
+
+function downloadIcs(ev) {
+  const blob = new Blob([icsFor(ev)], { type: "text/calendar" });
+  const a = el("a", { href: URL.createObjectURL(blob), download: `${ev.id}.ics` });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function renderChips() {
+  const wrap = document.querySelector("[data-chips]");
+  const opts = [{ id: "all", name: "All boroughs" }, ...BOROUGHS];
+  const now = Date.now();
+  wrap.replaceChildren(...opts.map(o => {
+    const n = EVENTS.filter(ev => (o.id === "all" || ev.borough === o.id) && span(ev).end > now).length;
+    const b = el("button", { type: "button", class: "chip", "aria-pressed": String(filter === o.id) },
+      o.name, el("span", { class: "n", text: String(n) }));
+    b.addEventListener("click", () => setFilter(o.id));
+    return b;
+  }));
+  document.querySelector("[data-filter-name]").textContent = filter === "all" ? "" : `· ${boroughName(filter)}`;
+}
+
+function renderSets() {
+  const now = Date.now();
+  const list = document.querySelector("[data-sets]");
+  const upcoming = visible().filter(ev => span(ev).end > now);
+  if (!upcoming.length) {
+    const b = BOROUGHS.find(x => x.id === filter);
+    const msg = b && !b.now
+      ? `${b.name} is on the route but has no dates yet. If your shop is there, get in touch and it could be the first.`
+      : "No dates on the calendar right now. New ones go up here first.";
+    list.replaceChildren(el("p", { class: "empty", text: msg }));
+    return;
+  }
+  list.replaceChildren(...upcoming.map(ev => {
+    const [y, m, d] = ymd(ev.date);
+    const { start, end } = span(ev);
+    const live = now >= start && now < end;
+    const open = ev.status === "open";
+    const actions = el("div", { class: "actions" });
+    if (open) {
+      actions.append(el("a", { class: "pill warm", href: hostMail(ev), text: "Host this date →" }));
+    } else {
+      const ics = el("button", { type: "button", class: "pill", text: "+ Add to calendar" });
+      ics.addEventListener("click", () => downloadIcs(ev));
+      actions.append(ics,
+        el("a", { class: "pill", rel: "noopener", href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${ev.venue} ${ev.address}`)}`, text: "Map" }),
+        ev.rsvpUrl ? el("a", { class: "pill", rel: "noopener", href: ev.rsvpUrl, text: "RSVP" }) : null);
+    }
+    return el("article", { class: "set", id: `set-${ev.id}` },
+      el("div", { class: "set-date" },
+        el("div", { class: "m", text: MONTHS[m - 1] }),
+        el("div", { class: "d", text: String(d) }),
+        el("div", { class: "w", text: DAYS[weekday(y, m, d)] })
+      ),
+      el("div", {},
+        el("h3", {}, titleOf(ev),
+          el("span", { class: `tag ${live ? "live" : ev.status}`, text: live ? "● On air" : open ? "Open slot" : "Confirmed" })),
+        el("p", { class: "meta" },
+          el("b", { text: `${clockOf(ev.time)}–${clockOf(ev.endTime)}` }),
+          el("span", { class: "sun", text: `☀ ${sunText(ev)}` }),
+          el("span", { text: placeOf(ev) }),
+          open ? null : el("span", { text: lineupText(ev) })
+        ),
+        ev.address ? el("p", { class: "meta" }, el("span", { text: ev.address })) : null,
+        ev.note ? el("p", { class: "note", text: ev.note }) : null,
+        actions
+      )
+    );
+  }));
+}
+
+function renderCal() {
+  const n = nyNow();
+  document.querySelector("[data-cal-title]").textContent = `${MONTHS_LONG[calM - 1]} ${calY}`;
+  const first = weekday(calY, calM, 1);
+  const days = new Date(Date.UTC(calY, calM, 0)).getUTCDate();
+  const byDate = new Map();
+  for (const ev of visible()) byDate.set(ev.date, [...(byDate.get(ev.date) || []), ev]);
+  const now = Date.now();
+  const cells = [];
+  for (let i = 0; i < first; i++) cells.push(el("span", { class: "day out", "aria-hidden": "true" }));
+  for (let d = 1; d <= days; d++) {
+    const evs = byDate.get(`${calY}-${pad(calM)}-${pad(d)}`);
+    const isToday = calY === n.y && calM === n.m && d === n.d;
+    if (evs) {
+      // A confirmed set outranks an open slot on the same morning.
+      const ev = evs.find(e => e.status === "confirmed") || evs[0];
+      const past = evs.every(e => span(e).end <= now);
+      const b = el("button", {
+        type: "button", class: `day ${ev.status}${past ? " past" : ""}${isToday ? " today" : ""}`,
+        "aria-label": `${d} ${MONTHS_LONG[calM - 1]}: ${evs.map(e => `${titleOf(e)}, ${placeOf(e)}`).join("; ")}${past ? " (past)" : ""}`,
+        text: String(d)
+      });
+      b.addEventListener("click", () => {
+        const card = document.getElementById(`set-${ev.id}`);
+        if (!card) return;
+        card.scrollIntoView({ block: "center" });
+        card.classList.add("flash");
+        setTimeout(() => card.classList.remove("flash"), 1800);
+      });
+      cells.push(b);
+    } else {
+      cells.push(el("span", { class: `day${isToday ? " today" : ""}`, text: String(d) }));
+    }
+  }
+  while (cells.length % 7) cells.push(el("span", { class: "day out", "aria-hidden": "true" }));
+  const rows = [];
+  for (let i = 0; i < cells.length; i += 7) rows.push(el("tr", {}, ...cells.slice(i, i + 7).map(c => el("td", {}, c))));
+  document.querySelector("[data-cal-body]").replaceChildren(...rows);
+}
+
+function shiftCal(delta) {
+  calM += delta;
+  if (calM < 1) { calM = 12; calY--; }
+  if (calM > 12) { calM = 1; calY++; }
+  renderCal();
+}
+
+/* Jump the calendar to the first upcoming date in view, or today's month. */
+function homeCal() {
+  const next = visible().find(ev => span(ev).end > Date.now());
+  const n = nyNow();
+  [calY, calM] = next ? ymd(next.date) : [n.y, n.m];
+}
+
+function setFilter(id) {
+  filter = id;
+  homeCal();
+  renderChips(); renderCal(); renderSets();
+}
+
+function renderRoute() {
+  const wrap = document.querySelector("[data-route]");
+  wrap.replaceChildren(...BOROUGHS.map((b, i) => {
+    const btn = el("button", { type: "button", class: "stop", "aria-label": `${b.name}, ${b.state}. Show on the calendar.` },
+      el("span", { class: "idx", text: `${pad(i + 1)}/05` }),
+      el("span", { class: "name", text: b.name }),
+      el("span", { class: `state${b.now ? " now" : ""}`, text: b.state }),
+      el("span", { class: "desc", text: b.desc })
+    );
+    btn.addEventListener("click", () => {
+      setFilter(b.id);
+      document.getElementById("calendar").scrollIntoView();
+    });
+    return btn;
+  }));
+}
+
+/* The deck: the next confirmed set if there is one, else the next open slot. */
+let deckEv = null;
+function pickNext() {
+  const now = Date.now();
+  const up = EVENTS.filter(ev => span(ev).end > now);
+  deckEv = up.find(ev => ev.status === "confirmed") || up[0] || null;
+  const q = s => document.querySelector(s);
+  const cta = q("[data-next-cta]");
+  if (!deckEv) {
+    q("[data-next-label]").textContent = "Next set";
+    q("[data-next-title]").textContent = "Dates soon";
+    q("[data-next-when]").textContent = "The first mornings go up here.";
+    q("[data-next-where]").textContent = "";
+    q("[data-next-sun]").textContent = "";
+    cta.textContent = "Host the first one"; cta.href = "#host";
+    return;
+  }
+  const open = deckEv.status === "open";
+  q("[data-next-label]").textContent = open ? "Next open slot // needs a shop" : "Next set // confirmed";
+  q("[data-next-title]").textContent = open ? `${deckEv.area || boroughName(deckEv.borough)}, at sunrise` : titleOf(deckEv);
+  q("[data-next-when]").textContent = whenText(deckEv);
+  q("[data-next-where]").textContent = open ? `${boroughName(deckEv.borough)} · venue to be confirmed` : placeOf(deckEv);
+  q("[data-next-sun]").textContent = `☀ ${sunText(deckEv)}`;
+  if (open) { cta.textContent = "Host this date"; cta.href = hostMail(deckEv); }
+  else { cta.textContent = "See it on the calendar"; cta.href = "#calendar"; }
+}
+
+function tick() {
+  const n = nyNow();
+  document.querySelector("[data-clock]").textContent = `${pad(n.h)}:${pad(n.mi)}:${pad(n.s)} NYC`;
+  const cd = document.querySelector("[data-countdown]");
+  const live = document.querySelector("[data-live]");
+  if (!deckEv) { cd.hidden = true; live.hidden = true; return; }
+  const { start, end } = span(deckEv);
+  const t = Date.now();
+  if (t >= end) { pickNext(); renderChips(); renderCal(); renderSets(); return; }
+  if (t >= start) { cd.hidden = true; live.hidden = deckEv.status !== "confirmed"; return; }
+  cd.hidden = false; live.hidden = true;
+  let s = Math.floor((start - t) / 1000);
+  const d = Math.floor(s / 86400); s -= d * 86400;
+  const h = Math.floor(s / 3600); s -= h * 3600;
+  const m = Math.floor(s / 60); s -= m * 60;
+  cd.querySelector('[data-cd="d"]').textContent = d;
+  cd.querySelector('[data-cd="h"]').textContent = pad(h);
+  cd.querySelector('[data-cd="m"]').textContent = pad(m);
+  cd.querySelector('[data-cd="s"]').textContent = pad(s);
+}
+
+function renderSunToday() {
+  const n = nyNow();
+  const p = partsAt(sunrise(n.y, n.m, n.d));
+  document.querySelector("[data-sun-today]").textContent = `Sunrise today ${clock(p.h, p.mi)}`;
+}
+
+/* ==========================================================================
+   5. HOST A SET — builds a mailto. Nothing leaves the page on its own.
+   ========================================================================== */
+
+function initPitch() {
+  const sel = document.querySelector("[data-borough-select]");
+  BOROUGHS.forEach(b => sel.append(el("option", { value: b.name, text: b.name })));
+  const form = document.querySelector("[data-pitch]");
+  const msg = document.querySelector("[data-pitch-msg]");
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const f = new FormData(form);
+    const shop = String(f.get("shop") || "").trim();
+    if (!shop) {
+      msg.textContent = "Add the shop's name first.";
+      form.querySelector("#f-shop").focus();
+      return;
+    }
+    const lines = [
+      "Hi DataRail,", "",
+      "We'd like to host a sunrise set.", "",
+      `Shop: ${shop}`,
+      `Neighborhood: ${String(f.get("area") || "").trim() || "-"}`,
+      `Borough: ${f.get("borough")}`,
+      `Room to spare: ${f.get("space")}`,
+      "", String(f.get("note") || "").trim()
+    ];
+    location.href = `mailto:contact@datarail.org?subject=${encodeURIComponent(`Sunrise set at ${shop}`)}&body=${encodeURIComponent(lines.join("\n").trim() + "\n")}`;
+    msg.textContent = "Your email app should open with this filled in. If it didn't, write to contact@datarail.org.";
+  });
+}
+
+/* ==========================================================================
+   6. BOOT
+   ========================================================================== */
+
+function useData(data, live) {
+  EVENTS = (data.events || []).slice().sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  const [uy, um, ud] = ymd(data.updatedAt || "2026-10-10");
+  document.querySelector("[data-synced]").textContent = `${live ? "Updated" : "Offline copy"} · ${ud} ${MONTHS[um - 1]} ${uy}`;
+  homeCal();
+  renderChips(); renderCal(); renderSets();
+  pickNext();
+  tick();
+}
+
+async function init() {
+  document.querySelector("[data-cal-prev]").addEventListener("click", () => shiftCal(-1));
+  document.querySelector("[data-cal-next]").addEventListener("click", () => shiftCal(1));
+  renderSunToday();
+  renderRoute();
+  initPitch();
+  setInterval(tick, 1000);
+  setInterval(renderSunToday, 10 * 60e3);
+  try {
+    const res = await fetch("events.json", { cache: "no-cache" });
+    if (!res.ok) throw new Error(res.status);
+    useData(await res.json(), true);
+  } catch {
+    useData(SEED, false);
+  }
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Validate events.json
+        run: node scripts/validate.mjs
+
+      - name: Syntax-check the scripts
+        run: for f in scripts/*.mjs; do node --check "$f"; done
+
+      # The page carries a copy of events.json for when the fetch fails. An
+      # edit to one without the other is a mistake, not a judgement call.
+      - name: Check the seed was regenerated
+        run: node scripts/sync-seed.mjs --check
