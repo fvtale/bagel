@@ -194,40 +194,42 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .deck .btn { width: 100%; justify-content: center; font-family: var(--font-main); }
 
 /* The horizon: a striped lo-fi sun coming up behind a flat skyline. */
-.horizon { display: block; width: 100%; height: clamp(90px, 16vw, 170px); margin-top: 34px; }
+.horizon { display: block; width: 100%; height: clamp(90px, 18vw, 210px); margin-top: 34px; }
 .horizon .sunball { animation: rise 9s cubic-bezier(.2,.7,.2,1) both; transform-box: fill-box; }
 @keyframes rise { from { transform: translateY(46%); } to { transform: translateY(0); } }
 
-/* The neon bagel on the rooftop. Tubes draw on like a sign warming up,
-   then it buzzes: mostly steady, with the odd stutter. Static styles are
-   the lit state, so with motion reduced the sign is simply on. */
-.neon-bagel { animation: buzz 7s 2s infinite; }
-.neon-bagel .tube { stroke-dasharray: 1; stroke-dashoffset: 0; animation: tubeOn 1.8s .4s ease-out both; }
-.neon-bagel .seed { animation: seed 3.2s ease-in-out infinite; }
+/* The street: a bagel shop walk-up with a neon bagel on a blade sign, a
+   neon coffee cup in its window, and a water tower across the way. Neon
+   tubes draw on like a sign warming up, then buzz with the odd stutter.
+   Static styles are the lit state, so with motion reduced it is all on. */
+.tube { stroke-dasharray: 1; stroke-dashoffset: 0; animation: tubeOn 1.8s .4s ease-out both; }
 @keyframes tubeOn { from { stroke-dashoffset: 1; } }
+.neon-bagel { animation: buzz 7s 2s infinite; }
+.neon-cup { animation: buzz 9s 4.5s infinite; }
+.neon-bagel .seed { animation: seed 3.2s ease-in-out infinite; }
 @keyframes buzz {
   0%, 40%, 43%, 46%, 80%, 100% { opacity: 1; }
   41%, 45% { opacity: .35; }
   81% { opacity: .7; }
 }
 @keyframes seed { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+.steam { animation: steam 3.2s ease-in-out infinite; }
+@keyframes steam {
+  0% { opacity: 0; transform: translateY(3px); }
+  35% { opacity: .9; }
+  100% { opacity: 0; transform: translateY(-5px); }
+}
+/* An early riser's light, going on as the sun comes up. */
+.win-wake { animation: wake 9s 1.5s ease-in both; }
+@keyframes wake { 0%, 60% { opacity: .08; } 62% { opacity: .5; } 64% { opacity: .2; } 70%, 100% { opacity: .55; } }
 
-/* Vaporwave floor: a pink grid running toward you under the horizon. */
-.floor {
-  position: relative; height: clamp(44px, 7vw, 76px); overflow: hidden; perspective: 140px;
-  background: linear-gradient(rgba(255,111,168,.10), transparent 80%);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
-          mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
-}
-.floor::before {
-  content: ""; position: absolute; left: -50%; right: -50%; top: 0; height: 300%;
-  transform-origin: top; transform: rotateX(62deg);
-  background:
-    linear-gradient(90deg, rgba(255,111,168,.38) 1px, transparent 1px) 50% 0 / 56px 100%,
-    linear-gradient(rgba(255,111,168,.38) 1px, transparent 1px) 0 0 / 100% 28px;
-  animation: floorRun 1.6s linear infinite;
-}
-@keyframes floorRun { to { background-position: 50% 0, 0 28px; } }
+/* ---------- The tape deck ---------- */
+.transport { display: flex; gap: 9px; align-items: center; color: var(--dim); letter-spacing: 0; }
+.transport .on { color: var(--accent); text-shadow: 0 0 8px var(--accent); }
+.cassette { display: block; width: 100%; max-width: 270px; margin: 16px auto 2px; overflow: visible; }
+.cassette .reel { transform-box: fill-box; transform-origin: center; animation: spin 5s linear infinite; }
+.deck[data-state="live"] .cassette .reel { animation-duration: 1.4s; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ---------- VHS ----------
    Every 11s: a tracking band rolls down the screen, the horizon jitters,
@@ -513,9 +515,38 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
       <aside class="deck" aria-labelledby="next-title">
         <div class="deck-top">
-          <span class="rec">Side A</span>
+          <span class="transport" aria-hidden="true"><i>◂◂</i><i class="on">▸</i><i>■</i><i>▸▸</i><span class="rec">Rec</span></span>
           <span class="deck-clock" data-clock aria-label="Time in New York">--:--:-- NYC</span>
         </div>
+        <svg class="cassette" viewBox="0 0 300 118" aria-hidden="true" focusable="false">
+          <defs>
+            <filter id="tapeGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="2" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <g filter="url(#tapeGlow)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <g stroke="#ffb36b" stroke-width="2">
+              <rect class="tube" pathLength="1" x="5" y="5" width="290" height="108" rx="10"/>
+              <path class="tube" pathLength="1" d="M78 113L90 90H210L222 113"/>
+            </g>
+            <g stroke="#ffb36b" stroke-width="1.2" opacity=".8">
+              <circle cx="18" cy="18" r="2.5"/><circle cx="282" cy="18" r="2.5"/>
+              <circle cx="18" cy="100" r="2.5"/><circle cx="282" cy="100" r="2.5"/>
+              <circle cx="112" cy="102" r="3"/><circle cx="188" cy="102" r="3"/>
+              <rect x="141" y="98" width="6" height="6"/><rect x="153" y="98" width="6" height="6"/>
+            </g>
+            <rect class="tube" pathLength="1" x="22" y="16" width="256" height="62" rx="5" stroke="#ff8fbf" stroke-width="1.4"/>
+            <rect x="84" y="38" width="132" height="30" rx="15" stroke="#42f5ff" stroke-width="1.4"/>
+            <path d="M118 64H182" stroke="#ffb36b" stroke-width="1" opacity=".6"/>
+            <g stroke="#42f5ff" stroke-width="1.4">
+              <g class="reel"><circle cx="118" cy="53" r="11"/><circle cx="118" cy="53" r="4"/><path d="M118 42v6M127.5 58.5l-5.2-3M108.5 58.5l5.2-3"/></g>
+              <g class="reel"><circle cx="182" cy="53" r="11"/><circle cx="182" cy="53" r="4"/><path d="M182 42v6M191.5 58.5l-5.2-3M172.5 58.5l5.2-3"/></g>
+            </g>
+          </g>
+          <text x="34" y="31" fill="#ff8fbf" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="8.5" letter-spacing="2">SUNRISE SET · C-90</text>
+          <text x="266" y="33" fill="#ff8fbf" text-anchor="end" font-family="system-ui, sans-serif" font-weight="700" font-size="15">A</text>
+        </svg>
         <div class="deck-body">
           <p class="label" data-next-label>Next set</p>
           <h2 id="next-title" data-next-title>Loading the calendar…</h2>
@@ -534,7 +565,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
       </aside>
     </div>
 
-    <svg class="horizon glitch-shift"viewBox="0 0 1200 170" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
+    <svg class="horizon glitch-shift" viewBox="0 0 1200 170" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="#ff6fa8" stop-opacity="0"/>
@@ -559,6 +590,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
           <feGaussianBlur stdDeviation="3.2" result="b"/>
           <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
+        <filter id="neonGlowSm" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="1.6" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
         <radialGradient id="halo">
           <stop offset="0" stop-color="#ff6fa8" stop-opacity=".28"/>
           <stop offset="1" stop-color="#ff6fa8" stop-opacity="0"/>
@@ -568,14 +603,70 @@ button, input, select, textarea { font: inherit; color: inherit; }
       <g mask="url(#stripes)" opacity=".85">
         <circle class="sunball" cx="600" cy="170" r="104" fill="url(#sunfill)"/>
       </g>
-      <!-- a flat, blocky skyline: water towers and walk-ups, not landmarks -->
-      <path fill="#070a10" d="M0 170V138h46v-12h30v12h22v-20h40v20h18v-8h34v-18h12v-8h10v8h12v18h40v14h28v-24h44v24h20v-10h36v-22h18v-10h8v10h18v22h30v16h26v-30h52v30h20v-8h28v-16h12v16h26v8h36v-26h48v26h22v-12h34v-18h8v-9h8v9h8v18h26v12h30v-22h46v22h20v-14h40v-12h10v12h30v14h26v-28h40v28h34v-10h28v10h36v-18h44v18h40v32z"/>
-      <!-- the neon bagel: a rooftop sign, drawn around (314, 120) and moved
-           onto the walk-up at x 356–392. Kept well inside x 250–950, the
-           part of the skyline a phone still shows. -->
-      <g class="neon-bagel" transform="translate(374 134) scale(1.4) translate(-314 -120)">
+      <!-- a flat, blocky skyline: water towers and walk-ups, not landmarks.
+           A shade lighter than the street so the street reads in front. -->
+      <path fill="#0b0f17" d="M0 170V138h46v-12h30v12h22v-20h40v20h18v-8h34v-18h12v-8h10v8h12v18h40v14h28v-24h44v24h20v-10h36v-22h18v-10h8v10h18v22h30v16h26v-30h52v30h20v-8h28v-16h12v16h26v8h36v-26h48v26h22v-12h34v-18h8v-9h8v9h8v18h26v12h30v-22h46v22h20v-14h40v-12h10v12h30v14h26v-28h40v28h34v-10h28v10h36v-18h44v18h40v32z"/>
+      <!-- The street, in front of the skyline. Everything here sits inside
+           x 250–950, the part of the drawing a phone still shows. -->
+
+      <!-- the bagel shop: a five-storey walk-up, x 286–410 -->
+      <g fill="#05070b">
+        <rect x="286" y="46" width="124" height="7"/>
+        <rect x="290" y="52" width="116" height="118"/>
+      </g>
+      <g fill="#0f141d">
+        <rect x="302" y="62" width="14" height="16"/><rect x="378" y="62" width="14" height="16"/>
+        <rect x="302" y="86" width="14" height="16"/><rect x="340" y="86" width="14" height="16"/><rect x="378" y="86" width="14" height="16"/>
+        <rect x="340" y="110" width="14" height="16"/><rect x="378" y="110" width="14" height="16"/>
+      </g>
+      <g fill="#ffb36b">
+        <rect x="340" y="62" width="14" height="16" opacity=".5"/>
+        <rect class="win-wake" x="302" y="110" width="14" height="16" opacity=".55"/>
+      </g>
+      <!-- fire escape across the middle bay -->
+      <g fill="none" stroke="#1a2230" stroke-width="1.5">
+        <path d="M332 81h30M332 105h30M332 129h30"/>
+        <path d="M336 81l22 24M358 105l-22 24"/>
+      </g>
+      <!-- storefront: warm window, door, a pink neon trim along the fascia -->
+      <rect x="298" y="136" width="66" height="28" fill="#ffb36b" opacity=".13"/>
+      <rect x="372" y="138" width="22" height="32" fill="#0f141d"/>
+      <rect x="376" y="142" width="14" height="10" fill="#ffb36b" opacity=".25"/>
+      <path class="tube" pathLength="1" d="M296 132.5H400" stroke="#ff8fbf" stroke-width="1.2" filter="url(#neonGlowSm)"/>
+      <!-- neon coffee in the window, steam rising -->
+      <g class="neon-cup" filter="url(#neonGlowSm)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <g stroke="#42f5ff" stroke-width="1.6">
+          <path class="tube" pathLength="1" d="M322 148h16v5a8 8 0 0 1-16 0z"/>
+          <path class="tube" pathLength="1" d="M338 150.5a3.5 3.5 0 0 1 0 7"/>
+          <path class="tube" pathLength="1" d="M317 163h26"/>
+        </g>
+        <g stroke="#bffbff" stroke-width="1.1">
+          <path class="steam" d="M326 145c-2.5-2.5 2.5-4.5 0-8"/>
+          <path class="steam" style="animation-delay:-1.1s" d="M330 145c-2.5-2.5 2.5-4.5 0-8"/>
+          <path class="steam" style="animation-delay:-2.2s" d="M334 145c-2.5-2.5 2.5-4.5 0-8"/>
+        </g>
+      </g>
+      <!-- the blade sign's bracket, off the shop's right wall -->
+      <path d="M406 64H472M406 84L448 64M428 64v9M462 64v9" fill="none" stroke="#1a2230" stroke-width="2" stroke-linecap="round"/>
+
+      <!-- across the street: a shorter walk-up with a water tower, x 790–880 -->
+      <g fill="#05070b">
+        <rect x="790" y="96" width="90" height="74"/>
+        <path d="M816 96V80M834 96V80M825 96V80" stroke="#05070b" stroke-width="2.5"/>
+        <rect x="811" y="60" width="28" height="21" rx="2"/>
+        <path d="M808 61L825 48L842 61z"/>
+      </g>
+      <path d="M811 67h28M811 74h28" stroke="#121823" stroke-width="1"/>
+      <g fill="#0f141d">
+        <rect x="802" y="108" width="12" height="14"/><rect x="830" y="108" width="12" height="14"/>
+        <rect x="802" y="132" width="12" height="14"/><rect x="858" y="132" width="12" height="14"/>
+      </g>
+      <rect x="858" y="108" width="12" height="14" fill="#ffb36b" opacity=".45"/>
+      <rect x="830" y="132" width="12" height="14" fill="#42f5ff" opacity=".18"/>
+
+      <!-- the neon bagel, drawn around (314, 64) and hung from the bracket -->
+      <g class="neon-bagel" transform="translate(445 92) scale(.75) translate(-314 -64)">
         <ellipse cx="314" cy="66" rx="60" ry="34" fill="url(#halo)"/>
-        <path fill="#0d1119" d="M312 90h4v30h-4zM300 112h28v3h-28z"/>
         <g filter="url(#neonGlow)" fill="none" stroke-linecap="round">
           <g stroke="#ff8fbf" stroke-width="2.6">
             <ellipse class="tube" pathLength="1" cx="314" cy="64" rx="40" ry="26"/>
@@ -597,7 +688,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
       </g>
       <line x1="0" y1="169.5" x2="1200" y2="169.5" stroke="#ffb36b" stroke-opacity=".5"/>
     </svg>
-    <div class="floor glitch-shift" aria-hidden="true"></div>
 
     <div class="ticker" aria-hidden="true">
       <div class="ticker-track">
@@ -612,7 +702,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     <div class="shell">
       <div class="sec-head">
         <div>
-          <p class="label">01 <b>//</b> The calendar</p>
+          <p class="label">A1 <b>//</b> The calendar</p>
           <h2 id="cal-title">Every set catches the <em>sunrise.</em></h2>
         </div>
         <p>Dashed dates are open: mornings we want to fill and are looking for a shop to host. Solid dates are confirmed. Sunrise times are calculated for each date.</p>
@@ -654,7 +744,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     <div class="shell">
       <div class="sec-head">
         <div>
-          <p class="label">02 <b>//</b> The route</p>
+          <p class="label">A2 <b>//</b> The route</p>
           <h2 id="route-title">Manhattan first, then <em>the other four.</em></h2>
         </div>
         <p>We'll move on to the next borough once Manhattan has a regular rotation of shops. Pick a borough to filter the calendar.</p>
@@ -668,7 +758,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     <div class="shell">
       <div class="sec-head">
         <div>
-          <p class="label">03 <b>//</b> For bagel shops</p>
+          <p class="label">B1 <b>//</b> For bagel shops</p>
           <h2 id="host-title">A corner, a power outlet, <em>and the ovens on.</em></h2>
         </div>
         <p>You don't need a stage or a back room. If you can fit a small table without blocking the line, you can host.</p>
@@ -1102,7 +1192,10 @@ function tick() {
   const { start, end } = span(deckEv);
   const t = Date.now();
   if (t >= end) { pickNext(); renderChips(); renderCal(); renderSets(); return; }
-  if (t >= start) { cd.hidden = true; live.hidden = deckEv.status !== "confirmed"; return; }
+  // The cassette reels run fast while a confirmed set is on air.
+  const onAir = t >= start && deckEv.status === "confirmed";
+  document.querySelector(".deck").dataset.state = onAir ? "live" : "cued";
+  if (t >= start) { cd.hidden = true; live.hidden = !onAir; return; }
   cd.hidden = false; live.hidden = true;
   let s = Math.floor((start - t) / 1000);
   const d = Math.floor(s / 86400); s -= d * 86400;
